@@ -1,4 +1,5 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { logger } from '../utils/logger.js';
 
 // Define the command structure
 export const data = new SlashCommandBuilder()
@@ -48,7 +49,7 @@ export async function execute(interaction, db) {
         await interaction.reply({ embeds: [embed] });
 
     } catch (error) {
-        console.error('Error executing /cartera:', error);
+        logger.error('Error executing /cartera:', error);
         await interaction.reply({ content: 'Error al recuperar los datos de la cartera.', ephemeral: true });
     }
 }

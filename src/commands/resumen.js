@@ -1,4 +1,5 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { logger } from '../utils/logger.js';
 
 // Define the command structure
 export const data = new SlashCommandBuilder()
@@ -49,7 +50,7 @@ export async function execute(interaction, db) {
         await interaction.reply({ embeds: [embed] });
 
     } catch (error) {
-        console.error('Error executing /resumen:', error);
+        logger.error('Error executing /resumen:', error);
         await interaction.reply({ content: 'Error al generar el reporte de balance histórico.', ephemeral: true });
     }
 }

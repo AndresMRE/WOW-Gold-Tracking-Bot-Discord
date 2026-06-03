@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
+import { logger } from '../utils/logger.js';
 
 // Define the command structure
 export const data = new SlashCommandBuilder()
@@ -41,7 +42,7 @@ export async function execute(interaction, db) {
         });
 
     } catch (error) {
-        console.error('Error executing /mioro:', error);
+        logger.error('Error executing /mioro:', error);
         await interaction.reply({ 
             content: 'Hubo un error al intentar consultar tu saldo de oro.', 
             ephemeral: true 

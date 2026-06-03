@@ -4,6 +4,16 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import 'dotenv/config';
 import { initDB } from './data/db.js';
+import { logger } from './utils/logger.js';
+
+// Global error handlers to prevent silent crashes
+process.on('uncaughtException', (error) => {
+    logger.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
 
 // Replicate __dirname functionality in ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -37,7 +47,7 @@ for (const file of commandFiles) {
 
 // Event triggered when the bot is ready and online
 client.once('ready', () => {
-    console.log(`¡Bot encendido y listo! Conectado como ${client.user.tag}`);
+    logger.info(`¡Bot encendido y listo! Conectado como ${client.user.tag}`);
 });
 
 // Listener for interaction events (Slash Commands)
@@ -50,8 +60,12 @@ client.on('interactionCreate', async interaction => {
         try {
             await command.execute(interaction, db);
         } catch (error) {
-            console.error(`Error executing command ${interaction.commandName}:`, error);
-            await interaction.reply({ content: 'Hubo un error interno al procesar este comando.', ephemeral: true });
+            logger.error(`Error executing command ${interaction.commandName}:`, error);
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({ content: 'Hubo un error interno al procesar este comando.', ephemeral: true });
+            } else {
+                await interaction.reply({ content: 'Hubo un error interno al procesar este comando.', ephemeral: true });
+            }
         }
         return;
     }
@@ -61,14 +75,24 @@ client.on('interactionCreate', async interaction => {
         // Identify our menu component via custom ID
         if (interaction.customId === 'select_cartera_history') {
             try {
-                // Collect the chosen wallet ID from the selection event array
-                const selectedWalletId = interaction.values[0];
+                // Convert the string ID from Discord into a clean Number for SQLite
+                const selectedWalletId = Number(interaction.values[0]);
 
-                // Fetch target wallet records
-                const cartera = await db.get("SELECT * FROM carteras WHERE id = ?", [selectedWalletId]);
+                // Query using flat arguments (no brackets), matching the sqlite wrapper specification
+                const cartera = await db.get("SELECT * FROM carteras WHERE id = ?", selectedWalletId);
+                
+                // Safety check: If the wallet wasn't found for any reason, abort gracefully
+                if (!cartera) {
+                    await interaction.reply({ 
+                        content: 'No se pudo encontrar la cartera seleccionada en la base de datos.', 
+                        ephemeral: true 
+                    });
+                    return;
+                }
+
                 const aportes = await db.all(
                     "SELECT user_id, cantidad FROM aportes WHERE cartera_id = ? ORDER BY cantidad DESC",
-                    [selectedWalletId]
+                    selectedWalletId
                 );
 
                 const statusEmoji = cartera.estado === 'abierta' ? '🟢' : '🔴';
@@ -89,15 +113,19 @@ client.on('interactionCreate', async interaction => {
                     responseText += `\n🪙 **Total recaudado:** **${totalGold.toLocaleString()}** de oro`;
                 }
 
-                // Update the original interaction message to present the query results seamlessly
+                // Update the original interaction message seamlessly
                 await interaction.update({
                     content: responseText,
-                    components: interaction.message.components // Retains the menu component in case they want to select another one
+                    components: interaction.message.components
                 });
 
             } catch (error) {
-                console.error('Error handling select menu interaction:', error);
-                await interaction.reply({ content: 'Hubo un problema al cargar los detalles de la cartera seleccionada.', ephemeral: true });
+                logger.error('Error handling select menu interaction:', error);
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp({ content: 'Hubo un problema al cargar los detalles de la cartera seleccionada.', ephemeral: true });
+                } else {
+                    await interaction.reply({ content: 'Hubo un problema al cargar los detalles de la cartera seleccionada.', ephemeral: true });
+                }
             }
         }
     }
@@ -106,7 +134,9 @@ client.on('interactionCreate', async interaction => {
 // Initialize DB and then authenticate with Discord API
 initDB().then((database) => {
     db = database;
-    client.login(process.env.DISCORD_TOKEN);
+    client.login(process.env.DISCORD_TOKEN).catch(err => {
+        logger.error('Failed to login to Discord API:', err);
+    });
 }).catch((error) => {
-    console.error('Database initialization failed:', error);
+    logger.error('Database initialization failed:', error);
 });

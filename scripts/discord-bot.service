@@ -1,0 +1,21 @@
+[Unit]
+Description=Discord Bot para Tracking de Oro WoW
+After=network.target
+
+[Service]
+Type=simple
+User=andres60944362
+WorkingDirectory=/home/andres60944362/WOW-Gold-Tracking-Bot-Discord
+# Si Node está instalado a través de NVM, es posible que systemd no lo encuentre.
+# Se usa /usr/bin/env node para mayor compatibilidad, pero lo ideal es usar la ruta absoluta si falla.
+ExecStart=/usr/bin/env npm start
+Restart=on-failure
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=discord-bot
+# Definir NODE_ENV como producción
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

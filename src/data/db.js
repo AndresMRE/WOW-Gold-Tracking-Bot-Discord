@@ -1,5 +1,6 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import { logger } from '../utils/logger.js';
 
 // Initialize and export the database connection
 export async function initDB() {
@@ -7,6 +8,9 @@ export async function initDB() {
         filename: './guild_gold.db',
         driver: sqlite3.Database
     });
+
+    // Habilitar Foreign Keys (necesario en SQLite)
+    await db.exec('PRAGMA foreign_keys = ON;');
 
     // Create the 'carteras' table with the new 'usd' column
     await db.exec(`
@@ -46,7 +50,7 @@ export async function initDB() {
             "INSERT INTO carteras (fecha_inicio, estado) VALUES (?, ?)", 
             [today, 'abierta']
         );
-        console.log('¡Base de datos inicializada y primera cartera creada!');
+        logger.info('¡Base de datos inicializada y primera cartera creada!');
     }
 
     return db;

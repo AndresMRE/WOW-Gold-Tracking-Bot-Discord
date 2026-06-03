@@ -1,4 +1,5 @@
 import { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder } from 'discord.js';
+import { logger } from '../utils/logger.js';
 
 export const data = new SlashCommandBuilder()
     .setName('listacarteras')
@@ -39,7 +40,7 @@ export async function execute(interaction, db) {
         });
 
     } catch (error) {
-        console.error('Error executing /listacarteras:', error);
+        logger.error('Error executing /listacarteras:', error);
         await interaction.reply({ content: 'Error al procesar la lista de carteras.', ephemeral: true });
     }
 }

@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
+import { logger } from '../utils/logger.js';
 
 // Define the command structure
 export const data = new SlashCommandBuilder()
@@ -47,7 +48,7 @@ export async function execute(interaction, db) {
         await interaction.reply(responseText);
 
     } catch (error) {
-        console.error('Error executing /cerrarcartera:', error);
+        logger.error('Error executing /cerrarcartera:', error);
         await interaction.reply({ content: 'Hubo un error al intentar procesar el cierre de la cartera.', ephemeral: true });
     }
 }

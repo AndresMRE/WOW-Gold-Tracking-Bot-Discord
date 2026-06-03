@@ -4,8 +4,11 @@
   "description": "This is a bot for WoW Gold pro carriers",
   "main": "index.js",
   "scripts": {
-    "start":"node ./src/index.js",
-    "commad-update":"node src/deploy-commands.js",
+    "start": "node ./src/index.js",
+    "command-update": "node src/deploy-commands.js",
+    "deploy:setup": "bash scripts/setup-gcp.sh",
+    "deploy:update": "bash scripts/update.sh",
+    "deploy:reset-db": "bash scripts/reset-db.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -16,6 +19,8 @@
     "discord.js": "^14.26.4",
     "dotenv": "^17.4.2",
     "sqlite": "^5.1.1",
-    "sqlite3": "^6.0.1"
+    "sqlite3": "^6.0.1",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0"
   }
 }

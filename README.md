@@ -125,3 +125,28 @@ After creating a new command file, always remember to re-run `node src/deploy-co
 * **Process Management**: For production environments, it is highly recommended to run this application using a process manager such as `pm2` to ensure automatic restarts in case of system crashes or unexpected downtime.
 
 
+---
+# in GOC
+
+- run bot
+```bash
+nohup node ./src/index.js &
+```
+
+- watch logs
+
+```bash
+cat nohup.out
+```
+
+- shutdown bot 
+```bahs
+ps aux | grep node
+kill -9 12345
+```
+
+- clean history error 
+```bash
+rm nohup.out
+```
+

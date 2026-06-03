@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
+import { logger } from '../utils/logger.js';
 
 // Define the command structure for the Discord API
 export const data = new SlashCommandBuilder()
@@ -35,12 +36,14 @@ export async function execute(interaction, db) {
         );
 
         if (existingAporte) {
-            // Update existing contribution (add the new gold to the previous total)
-            const newTotal = existingAporte.cantidad + cantidad;
+            // Update existing contribution atomically
             await db.run(
-                "UPDATE aportes SET cantidad = ? WHERE id = ?",
-                [newTotal, existingAporte.id]
+                "UPDATE aportes SET cantidad = cantidad + ? WHERE id = ?",
+                [cantidad, existingAporte.id]
             );
+            
+            const updated = await db.get("SELECT cantidad FROM aportes WHERE id = ?", [existingAporte.id]);
+            const newTotal = updated.cantidad;
             
             await interaction.reply(`¡Aporte actualizado! Has sumado ${cantidad} de oro. Tu total en esta cartera es de **${newTotal}** de oro.`);
         } else {
@@ -54,7 +57,7 @@ export async function execute(interaction, db) {
         }
 
     } catch (error) {
-        console.error('Error executing /ahorro:', error);
+        logger.error('Error executing /ahorro:', error);
         await interaction.reply({ 
             content: 'Uff, hubo un error técnico al registrar tu aporte. Inténtalo de nuevo más tarde.', 
             ephemeral: true 

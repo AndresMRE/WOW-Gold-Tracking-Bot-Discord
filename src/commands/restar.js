@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
+import { logger } from '../utils/logger.js';
 
 // Define the command structure
 export const data = new SlashCommandBuilder()
@@ -43,18 +44,19 @@ export async function execute(interaction, db) {
             });
         }
 
-        const newTotal = existingAporte.cantidad - cantidadARestar;
-
-        // Update the database record with the new balance
+        // Update the database record with the new balance atomically
         await db.run(
-            "UPDATE aportes SET cantidad = ? WHERE id = ?",
-            [newTotal, existingAporte.id]
+            "UPDATE aportes SET cantidad = cantidad - ? WHERE id = ?",
+            [cantidadARestar, existingAporte.id]
         );
+
+        const updated = await db.get("SELECT cantidad FROM aportes WHERE id = ?", [existingAporte.id]);
+        const newTotal = updated.cantidad;
 
         await interaction.reply(`📉 ¡Corrección realizada! Has restado ${cantidadARestar.toLocaleString()} de oro. Tu total actualizado en esta cartera es de **${newTotal.toLocaleString()}** de oro.`);
 
     } catch (error) {
-        console.error('Error executing /restar:', error);
+        logger.error('Error executing /restar:', error);
         await interaction.reply({ content: 'Hubo un error al procesar la corrección.', ephemeral: true });
     }
 }
